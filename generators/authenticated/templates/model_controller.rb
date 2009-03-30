@@ -43,7 +43,11 @@ class <%= model_controller_class_name %>Controller < ApplicationController
     when (!params[:activation_code].blank?) && <%= file_name %> && !<%= file_name %>.active?
       <%= file_name %>.activate!
       flash[:notice] = "Signup complete! Please sign in to continue."
-      redirect_to '/login'
+      <% if options[:skip_routes] %>
+      redirect_to '/<%= controller_routing_path %>/new'
+      <% else %>
+      redirect_to login_path
+      <% end %>
     when params[:activation_code].blank?
       flash[:error] = "The activation code was missing.  Please follow the URL from your email."
       redirect_back_or_default('/')

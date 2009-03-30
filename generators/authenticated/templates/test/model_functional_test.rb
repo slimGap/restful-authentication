@@ -66,7 +66,11 @@ class <%= model_controller_class_name %>ControllerTest < ActionController::TestC
   def test_should_activate_user
     assert_nil <%= class_name %>.authenticate('aaron', 'test')
     get :activate, :activation_code => <%= table_name %>(:aaron).activation_code
+    <% if options[:skip_routes] %>
     assert_redirected_to '/<%= controller_routing_path %>/new'
+    <% else %>
+    assert_redirected_to login_path
+    <% end %>
     assert_not_nil flash[:notice]
     assert_equal <%= table_name %>(:aaron), <%= class_name %>.authenticate('aaron', 'monkey')
   end
