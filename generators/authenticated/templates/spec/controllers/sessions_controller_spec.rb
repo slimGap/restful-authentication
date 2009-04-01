@@ -108,7 +108,7 @@ describe <%= controller_class_name %>Controller do
       route_for(:controller => '<%= controller_controller_name %>', :action => 'create').should == { :method => "post", :path => "/<%= controller_routing_path %>" }
     end
     it "should route the destroy <%= controller_controller_name %> action correctly" do
-      route_for(:controller => '<%= controller_controller_name %>', :action => 'destroy').should == "/logout"
+      route_for(:controller => '<%= controller_controller_name %>', :action => 'destroy').should == { :method => "delete", :path => "/logout" }
     end
   end
   

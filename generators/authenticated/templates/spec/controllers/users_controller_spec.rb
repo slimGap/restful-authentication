@@ -105,7 +105,7 @@ describe <%= model_controller_class_name %>Controller do
     end
     
     it "should route {:controller => '<%= model_controller_controller_name %>', :action => 'create'} correctly" do
-      route_for(:controller => '<%= model_controller_controller_name %>', :action => 'create').should == "/register"
+      route_for(:controller => '<%= model_controller_controller_name %>', :action => 'create').should == { :method => "post", :path => "/register" }
     end
     
     it "should route <%= model_controller_controller_name %>'s 'show' action correctly" do
@@ -121,7 +121,7 @@ describe <%= model_controller_class_name %>Controller do
     end
     
     it "should route <%= model_controller_controller_name %>'s 'destroy' action correctly" do
-      route_for(:controller => '<%= model_controller_controller_name %>', :action => 'destroy', :id => '1').should == "/<%= model_controller_routing_path %>/1"
+      route_for(:controller => '<%= model_controller_controller_name %>', :action => 'destroy', :id => '1').should == { :method => "delete", :path => "/<%= model_controller_routing_path %>/1" }
     end
   end
   
