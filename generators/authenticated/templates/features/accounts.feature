@@ -30,15 +30,16 @@ Story: Creating an account
     Then  she should see a notice message 'Thanks for signing up!'
      And  a user with login: 'oona' should exist
      And  the user should have login: 'oona', and email: 'unactivated@example.com'
-
+<% if options[:include_activation] -%>
+     And  an email should be sent to 'unactivated@example.com' with the activation code for oona
+     And  oona should not be logged in
+<% else -%>
      And  oona should be logged in
-
+<% end -%>
 
   #
   # Account Creation Failure: Account exists
   #
-
-
   Scenario: Anonymous user can not create an account replacing an activated account
     Given an anonymous user
      And  an activated user named 'Reggie'
@@ -102,8 +103,41 @@ Story: Creating an account
     Then  she should see a notice message 'Thanks for signing up!'
      And  a user with login: 'oona' should exist
      And  the user should have login: 'oona', and email: 'unactivated@example.com'
-
+<% if options[:include_activation] -%>
+     And  an email should be sent to 'unactivated@example.com' with the activation code for oona
+     And  oona should not be logged in
+<% else -%>
      And  oona should be logged in
+<% end -%>
 
+<% if options[:include_activation] -%>
+  #
+  # Account Activation
+  #
+  Scenario: Activate an account successfully
+    Given an anonymous user
+     And  no user with login: 'Oona' exists
+    When  she registers an account as the preloaded 'Oona'
+    Then  she should be redirected to the home page
+    When  she follows that redirect!
+    Then  she should see a notice message 'Thanks for signing up!'
+     And  a user with login: 'oona' should exist
+     And  the user should have login: 'oona', and email: 'unactivated@example.com'
+     And  an email should be sent to 'unactivated@example.com' with the activation code for oona
+     And  oona should not be logged in
+    When  oona goes to her activation url
+    Then  she should be redirected to '/login'
+    When  she follows that redirect!
+    Then  she should see a notice message 'Signup complete!'
+     And  oona should not be logged in
+     And  a user with login: 'oona' should exist
+     And  the user should have state: 'active'
 
-
+  Scenario: Attmepting to activate an account with a bogus activation receives an error
+    Given an anonymous user
+     When she goes to /activate/this_is_a_bogus_activation_code
+     Then she should be redirected to the home page
+     When she follows that redirect!
+     Then she should see an error message 'check your email'
+      And she should not be logged in
+<% end -%>

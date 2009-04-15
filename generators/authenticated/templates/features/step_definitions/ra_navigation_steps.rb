@@ -8,6 +8,7 @@
 When "$actor goes to $path" do |actor, path|
   case path
   when 'the home page' then get '/'
+  when 'her activation url' then get "/activate/#{User.find_by_login(actor).activation_code}"
   else                      get path
   end
 end

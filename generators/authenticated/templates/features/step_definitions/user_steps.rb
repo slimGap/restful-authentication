@@ -71,6 +71,15 @@ Then "$login should be logged in" do |login|
   controller.current_user.login.should == login
 end
 
+<% if options[:include_activation] -%>
+Then "an email should be sent to '$address' with the activation code for $user" do |address, user|
+  response.should send_email
+  email = ActionMailer::Base.deliveries[0]
+  email.to.should include(address)
+  email.body.should include(User.find_by_login(user).activation_code)
+end
+<% end -%>
+
 def named_user login
   user_params = {
     'admin'   => {'id' => 1, 'login' => 'addie', 'password' => '1234addie', 'email' => 'admin@example.com',       },
@@ -110,7 +119,13 @@ def create_user!(user_type, user_params)
   create_user user_params
   response.should redirect_to('/')
   follow_redirect!
-
+<% if options[:include_activation] -%>
+  if user_type == 'activated'
+    get "/activate/#{User.find_by_login(user_params['login']).activation_code}"
+    response.should redirect_to('/login')
+    follow_redirect!
+  end
+<% end -%>
 end
 
 
