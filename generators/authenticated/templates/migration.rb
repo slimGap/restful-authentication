@@ -1,7 +1,9 @@
 class <%= migration_name %> < ActiveRecord::Migration
   def self.up
     create_table "<%= table_name %>", :force => true do |t|
+<% unless options[:email_only] -%>
       t.column :login,                     :string, :limit => 40
+<% end -%>
       t.column :name,                      :string, :limit => 100, :default => '', :null => true
       t.column :email,                     :string, :limit => 100
       t.column :crypted_password,          :string, :limit => 40
@@ -17,7 +19,11 @@ class <%= migration_name %> < ActiveRecord::Migration
       t.column :state,                     :string, :null => :no, :default => 'passive'
       t.column :deleted_at,                :datetime<% end %>
     end
+<% if options[:email_only] -%>
+    add_index :<%= table_name %>, :email, :unique => true 
+<% else -%>
     add_index :<%= table_name %>, :login, :unique => true
+<% end -%>
   end
 
   def self.down

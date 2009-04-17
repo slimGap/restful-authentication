@@ -50,13 +50,13 @@ end
 #
 
 # Resource like this DOES exist
-Then /^a (\w+) with ([\w: \']+) should exist$/ do |resource, attributes|
+Then /^a (\w+) with ([\w: \'@.]+) should exist$/ do |resource, attributes|
   instance = find_resource resource, attributes
   instance.should_not be_nil
   keep_instance! resource, instance
 end
 # Resource like this DOES NOT exist
-Then /^no (\w+) with ([\w: \']+) should exist$/ do |resource, attributes|
+Then /^no (\w+) with ([\w: \'@.]+) should exist$/ do |resource, attributes|
   instance = find_resource resource, attributes
   instance.should be_nil
 end

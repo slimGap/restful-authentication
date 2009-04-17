@@ -30,15 +30,27 @@ describe <%= model_controller_class_name %>Helper do
     it "should use given link text if :content_text is specified" do
       link_to_<%= file_name %>(@<%= file_name %>, :content_text => 'Hello there!').should have_tag("a", 'Hello there!')
     end
+<% if options[:email_only] -%>
+    it "should use the email as link text with no :content_method specified" do
+      link_to_<%= file_name %>(@<%= file_name %>).should have_tag("a", 'somebody@example.com')
+    end
+<% else -%>
     it "should use the login as link text with no :content_method specified" do
       link_to_<%= file_name %>(@<%= file_name %>).should have_tag("a", 'user_name')
     end
+<% end -%>
     it "should use the name as link text with :content_method => :name" do
       link_to_<%= file_name %>(@<%= file_name %>, :content_method => :name).should have_tag("a", 'U. Surname')
     end
+<% if options[:email_only] -%>
+    it "should use the email as title with no :title_method specified" do
+      link_to_<%= file_name %>(@<%= file_name %>).should have_tag("a[title='somebody@example.com']")
+    end
+<% else -%>
     it "should use the login as title with no :title_method specified" do
       link_to_<%= file_name %>(@<%= file_name %>).should have_tag("a[title='user_name']")
     end
+<% end -%>
     it "should use the name as link title with :content_method => :name" do
       link_to_<%= file_name %>(@<%= file_name %>, :title_method => :name).should have_tag("a[title='U. Surname']")
     end
@@ -90,15 +102,27 @@ describe <%= model_controller_class_name %>Helper do
     it "should use given link text if :content_text is specified" do
       link_to_current_<%= file_name %>(:content_text => 'Hello there!').should have_tag("a", 'Hello there!')
     end
+<% if options[:email_only] -%>
+    it "should use the email as link text with no :content_method specified" do
+      link_to_current_<%= file_name %>().should have_tag("a", 'somebody@example.com')
+    end
+<% else -%>
     it "should use the login as link text with no :content_method specified" do
       link_to_current_<%= file_name %>().should have_tag("a", 'user_name')
     end
+<% end -%>
     it "should use the name as link text with :content_method => :name" do
       link_to_current_<%= file_name %>(:content_method => :name).should have_tag("a", 'U. Surname')
     end
+<% if options[:email_only] -%>
+    it "should use the email as title with no :title_method specified" do
+      link_to_current_<%= file_name %>().should have_tag("a[title='somebody@example.com']")
+    end
+<% else -%>
     it "should use the login as title with no :title_method specified" do
       link_to_current_<%= file_name %>().should have_tag("a[title='user_name']")
     end
+<% end -%>
     it "should use the name as link title with :content_method => :name" do
       link_to_current_<%= file_name %>(:title_method => :name).should have_tag("a[title='U. Surname']")
     end

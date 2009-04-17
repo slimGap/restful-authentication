@@ -9,7 +9,11 @@ class <%= controller_class_name %>Controller < ApplicationController
 
   def create
     logout_keeping_session!
+<% if options[:email_only] -%>
+    <%= file_name %> = <%= class_name %>.authenticate(params[:email], params[:password])
+<% else -%>
     <%= file_name %> = <%= class_name %>.authenticate(params[:login], params[:password])
+<% end -%>
     if <%= file_name %>
       # Protects against session fixation attacks, causes request forgery
       # protection if user resubmits an earlier form using back
@@ -37,7 +41,12 @@ class <%= controller_class_name %>Controller < ApplicationController
 protected
   # Track failed login attempts
   def note_failed_signin
-    flash[:error] = "Couldn't log you in as '#{params[:login]}'"
-    logger.warn "Failed login for '#{params[:login]}' from #{request.remote_ip} at #{Time.now.utc}"
+<% if options[:email_only] -%>
+    flash[:error] = "Couldn't log you in as '#{params[:email]}'"
+    logger.warn "Failed login for '#{params[:email]}' from #{request.remote_ip} at #{Time.now.utc}"
+<% else -%>
+  flash[:error] = "Couldn't log you in as '#{params[:login]}'"
+  logger.warn "Failed login for '#{params[:login]}' from #{request.remote_ip} at #{Time.now.utc}"
+<% end -%>
   end
 end

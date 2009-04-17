@@ -1,7 +1,11 @@
 - if logged_in?
   %div{ :id => "<%= file_name %>-bar-greeting" }
     Logged in as
+<% if options[:email_only] -%>
+    = link_to_current_<%= file_name %> :content_method => :email
+<% else -%>
     = link_to_current_<%= file_name %> :content_method => :login
+<% end -%>
   %div{ :id => "<%= file_name %>-bar-action" }
     (
     = link_to "Log out", logout_path, { :title => "Log out" }

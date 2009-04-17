@@ -38,6 +38,7 @@ describe <%= class_name %> do
   # Validations
   #
 
+<% unless options[:email_only] -%>
   it 'requires login' do
     lambda do
       u = create_<%= file_name %>(:login => nil)
@@ -56,6 +57,7 @@ describe <%= class_name %> do
       end
     end
   end
+
   describe 'disallows illegitimate logins:' do
     ['12', '1234567890_234567890_234567890_234567890_', "tab\t", "newline\n",
      "Iñtërnâtiônàlizætiøn hasn't happened to ruby 1.8 yet",
@@ -68,6 +70,7 @@ describe <%= class_name %> do
       end
     end
   end
+<% end -%>
 
   it 'requires password' do
     lambda do
@@ -147,12 +150,21 @@ describe <%= class_name %> do
 
   it 'resets password' do
     <%= table_name %>(:quentin).update_attributes(:password => 'new password', :password_confirmation => 'new password')
+<% if options[:email_only] -%>
+    <%= class_name %>.authenticate('quentin@example.com', 'new password').should == <%= table_name %>(:quentin)
+<% else -%>
     <%= class_name %>.authenticate('quentin', 'new password').should == <%= table_name %>(:quentin)
+<% end -%>
   end
 
   it 'does not rehash password' do
+<% if options[:email_only] -%>
+    <%= table_name %>(:quentin).update_attributes(:email => 'quentin2@example.com')
+    <%= class_name %>.authenticate('quentin2@example.com', 'monkey').should == <%= table_name %>(:quentin)
+<% else -%>
     <%= table_name %>(:quentin).update_attributes(:login => 'quentin2')
     <%= class_name %>.authenticate('quentin2', 'monkey').should == <%= table_name %>(:quentin)
+<% end -%>
   end
 
   #
@@ -160,28 +172,48 @@ describe <%= class_name %> do
   #
 
   it 'authenticates <%= file_name %>' do
+<% if options[:email_only] -%>
+    <%= class_name %>.authenticate('quentin@example.com', 'monkey').should == <%= table_name %>(:quentin)
+<% else -%>
     <%= class_name %>.authenticate('quentin', 'monkey').should == <%= table_name %>(:quentin)
+<% end -%>
   end
 
   it "doesn't authenticate <%= file_name %> with bad password" do
+<% if options[:email_only] -%>
+    <%= class_name %>.authenticate('quentin@example.com', 'invalid_password').should be_nil
+<% else -%>
     <%= class_name %>.authenticate('quentin', 'invalid_password').should be_nil
+<% end -%>
   end
 
  if REST_AUTH_SITE_KEY.blank?
    # old-school passwords
    it "authenticates a user against a hard-coded old-style password" do
+<% if options[:email_only] -%>
+<% else -%>
+     <%= class_name %>.authenticate('salty_dog@example.com', 'test').should == <%= table_name %>(:old_password_holder)
+<% end -%>
      <%= class_name %>.authenticate('old_password_holder', 'test').should == <%= table_name %>(:old_password_holder)
    end
  else
    it "doesn't authenticate a user against a hard-coded old-style password" do
+<% if options[:email_only] -%>
+     <%= class_name %>.authenticate('salty_dog@example.com', 'test').should be_nil
+<% else -%>
      <%= class_name %>.authenticate('old_password_holder', 'test').should be_nil
+<% end -%>
    end
 
    # New installs should bump this up and set REST_AUTH_DIGEST_STRETCHES to give a 10ms encrypt time or so
    desired_encryption_expensiveness_ms = 0.1
    it "takes longer than #{desired_encryption_expensiveness_ms}ms to encrypt a password" do
      test_reps = 100
+<% if options[:email_only] -%>
+     start_time = Time.now; test_reps.times{ <%= class_name %>.authenticate('quentin@example.com', 'monkey'+rand.to_s) }; end_time   = Time.now
+<% else -%>
      start_time = Time.now; test_reps.times{ <%= class_name %>.authenticate('quentin', 'monkey'+rand.to_s) }; end_time   = Time.now
+<% end -%>
      auth_time_ms = 1000 * (end_time - start_time)/test_reps
      auth_time_ms.should > desired_encryption_expensiveness_ms
    end
@@ -245,7 +277,11 @@ describe <%= class_name %> do
 
   it 'does not authenticate suspended <%= file_name %>' do
     <%= table_name %>(:quentin).suspend!
+<% if options[:email_only] -%>
+    <%= class_name %>.authenticate('quentin@example.com', 'monkey').should_not == <%= table_name %>(:quentin)
+<% else -%>
     <%= class_name %>.authenticate('quentin', 'monkey').should_not == <%= table_name %>(:quentin)
+<% end -%>
   end
 
   it 'deletes <%= file_name %>' do
@@ -283,7 +319,11 @@ describe <%= class_name %> do
 <% end %>
 protected
   def create_<%= file_name %>(options = {})
+<% if options[:email_only] -%>
+    record = <%= class_name %>.new({ :email => 'quire@example.com', :password => 'quire69', :password_confirmation => 'quire69' }.merge(options))
+<% else -%>
     record = <%= class_name %>.new({ :login => 'quire', :email => 'quire@example.com', :password => 'quire69', :password_confirmation => 'quire69' }.merge(options))
+<% end -%>
     record.<% if options[:stateful] %>register! if record.valid?<% else %>save<% end %>
     record
   end

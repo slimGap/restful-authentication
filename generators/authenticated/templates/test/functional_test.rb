@@ -12,13 +12,21 @@ class <%= controller_class_name %>ControllerTest < ActionController::TestCase
   fixtures :<%= table_name %>
 
   def test_should_login_and_redirect
+<% if options[:email_only] -%>
+    post :create, :email => 'quentin@example.com', :password => 'monkey'
+<% else -%>
     post :create, :login => 'quentin', :password => 'monkey'
+<% end -%>
     assert session[:<%= file_name %>_id]
     assert_response :redirect
   end
 
   def test_should_fail_login_and_not_redirect
+<% if options[:email_only] -%>
+    post :create, :email => 'quentin@example.com', :password => 'bad password'
+<% else -%>
     post :create, :login => 'quentin', :password => 'bad password'
+<% end -%>
     assert_nil session[:<%= file_name %>_id]
     assert_response :success
   end
@@ -32,13 +40,21 @@ class <%= controller_class_name %>ControllerTest < ActionController::TestCase
 
   def test_should_remember_me
     @request.cookies["auth_token"] = nil
+<% if options[:email_only] -%>
+    post :create, :email => 'quentin@example.com', :password => 'monkey', :remember_me => "1"
+<% else -%>
     post :create, :login => 'quentin', :password => 'monkey', :remember_me => "1"
+<% end -%>
     assert_not_nil @response.cookies["auth_token"]
   end
 
   def test_should_not_remember_me
     @request.cookies["auth_token"] = nil
+<% if options[:email_only] -%>
+    post :create, :email => 'quentin@example.com', :password => 'monkey', :remember_me => "0"
+<% else -%>
     post :create, :login => 'quentin', :password => 'monkey', :remember_me => "0"
+<% end -%>
     assert @response.cookies["auth_token"].blank?
   end
   

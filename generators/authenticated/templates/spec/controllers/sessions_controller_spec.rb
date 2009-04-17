@@ -8,8 +8,13 @@ describe <%= controller_class_name %>Controller do
   fixtures        :<%= table_name %>
   before do 
     @<%= file_name %>  = mock_<%= file_name %>
+<% if options[:email_only] -%>
+    @login_params = { :email => 'quentin@example.com', :password => 'test' }
+    <%= class_name %>.stub!(:authenticate).with(@login_params[:email], @login_params[:password]).and_return(@<%= file_name %>)
+<% else -%>
     @login_params = { :login => 'quentin', :password => 'test' }
     <%= class_name %>.stub!(:authenticate).with(@login_params[:login], @login_params[:password]).and_return(@<%= file_name %>)
+<% end -%>
   end
   def do_create
     post :create, @login_params
@@ -76,7 +81,11 @@ describe <%= controller_class_name %>Controller do
       login_as :quentin
     end
     it 'logs out keeping session'   do controller.should_receive(:logout_keeping_session!); do_create end
+<% if options[:email_only] -%>
+    it 'flashes an error'           do do_create; flash[:error].should =~ /Couldn't log you in as 'quentin@example.com'/ end
+<% else -%>
     it 'flashes an error'           do do_create; flash[:error].should =~ /Couldn't log you in as 'quentin'/ end
+<% end -%>
     it 'renders the log in page'    do do_create; response.should render_template('new')  end
     it "doesn't log me in"          do do_create; controller.send(:logged_in?).should == false end
     it "doesn't send password back" do 

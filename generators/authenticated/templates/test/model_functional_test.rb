@@ -18,6 +18,7 @@ class <%= model_controller_class_name %>ControllerTest < ActionController::TestC
     end
   end
 
+<% unless options[:email_only] -%>
   def test_should_require_login_on_signup
     assert_no_difference '<%= class_name %>.count' do
       create_<%= file_name %>(:login => nil)
@@ -25,6 +26,7 @@ class <%= model_controller_class_name %>ControllerTest < ActionController::TestC
       assert_response :success
     end
   end
+<% end -%>
 
   def test_should_require_password_on_signup
     assert_no_difference '<%= class_name %>.count' do
@@ -64,7 +66,11 @@ class <%= model_controller_class_name %>ControllerTest < ActionController::TestC
   end
 
   def test_should_activate_user
+<% if options[:email_only] -%>
+    assert_nil <%= class_name %>.authenticate('aaron@example.com', 'test')
+<% else -%>
     assert_nil <%= class_name %>.authenticate('aaron', 'test')
+<% end -%>
     get :activate, :activation_code => <%= table_name %>(:aaron).activation_code
     <% if options[:skip_routes] %>
     assert_redirected_to '/<%= controller_routing_path %>/new'
@@ -72,7 +78,11 @@ class <%= model_controller_class_name %>ControllerTest < ActionController::TestC
     assert_redirected_to login_path
     <% end %>
     assert_not_nil flash[:notice]
+<% if options[:email_only] -%>
+    assert_equal <%= table_name %>(:aaron), <%= class_name %>.authenticate('aaron@example.com', 'monkey')
+<% else -%>
     assert_equal <%= table_name %>(:aaron), <%= class_name %>.authenticate('aaron', 'monkey')
+<% end -%>
   end
   
   def test_should_not_activate_user_without_key

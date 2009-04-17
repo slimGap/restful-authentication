@@ -13,18 +13,18 @@ Given "$an $user_type user with $attributes" do |_, user_type, attributes|
   create_user! user_type, attributes.to_hash_from_story
 end
 
-Given "$an $user_type user named '$login'" do |_, user_type, login|
-  create_user! user_type, named_user(login)
+Given "$an $user_type user named '$name'" do |_, user_type, name|
+  create_user! user_type, named_user(name)
 end
 
-Given "$an $user_type user logged in as '$login'" do |_, user_type, login|
-  create_user! user_type, named_user(login)
+Given "$an $user_type user logged in as '$name'" do |_, user_type, name|
+  create_user! user_type, named_user(name)
   log_in_user!
 end
 
-Given "$actor is logged in" do |_, login|
-  log_in_user! @user_params || named_user(login)
-end
+#Given "$actor is logged in" do |_, login|
+#  log_in_user! @user_params || named_user(login)
+#end
 
 Given "there is no $user_type user named '$login'" do |_, login|
   @user = User.find_by_login(login)
@@ -39,8 +39,8 @@ When "$actor logs out" do
   log_out
 end
 
-When "$actor registers an account as the preloaded '$login'" do |_, login|
-  user = named_user(login)
+When "$actor registers an account as the preloaded '$name'" do |_, name|
+  user = named_user(name)
   user['password_confirmation'] = user['password']
   create_user user
 end
@@ -65,28 +65,39 @@ Then "$actor should not be logged in" do |_|
   controller.logged_in?.should_not be_true
 end
 
-Then "$login should be logged in" do |login|
+Then "$login should be logged in" do |name|
   controller.logged_in?.should be_true
   controller.current_user.should === @user
-  controller.current_user.login.should == login
+  user = named_user_instance(name)
+  controller.current_user.should == user
 end
 
 <% if options[:include_activation] -%>
-Then "an email should be sent to '$address' with the activation code for $user" do |address, user|
+Then "an email should be sent to '$address' with the activation code for $name" do |address, name|
   response.should send_email
   email = ActionMailer::Base.deliveries[0]
   email.to.should include(address)
-  email.body.should include(User.find_by_login(user).activation_code)
+  email.body.should include(named_user_instance(name).activation_code)
 end
 <% end -%>
 
 def named_user login
   user_params = {
     'admin'   => {'id' => 1, 'login' => 'addie', 'password' => '1234addie', 'email' => 'admin@example.com',       },
-    'oona'    => {          'login' => 'oona',   'password' => '1234oona',  'email' => 'unactivated@example.com'},
+    'oona'    => {          'login' => 'oona',   'password' => '1234oona',  'email' => 'oona@example.com'},
     'reggie'  => {          'login' => 'reggie', 'password' => 'monkey',    'email' => 'registered@example.com' },
     }
   user_params[login.downcase]
+end
+
+# Lookup the named user in the database
+def named_user_instance(name)
+  user = named_user(name)
+  <% if options[:email_only] -%>
+  User.find_by_email(user['email'])
+<% else -%>
+  User.find_by_login(user['login'])
+<% end -%> 
 end
 
 #
@@ -111,7 +122,11 @@ end
 def create_user(user_params={})
   @user_params       ||= user_params
   post "/users", :user => user_params
+<% if options[:email_only] -%>
+  @user = User.find_by_email(user_params['email'])
+<% else -%>
   @user = User.find_by_login(user_params['login'])
+<% end -%>
 end
 
 def create_user!(user_type, user_params)
@@ -121,7 +136,12 @@ def create_user!(user_type, user_params)
   follow_redirect!
 <% if options[:include_activation] -%>
   if user_type == 'activated'
-    get "/activate/#{User.find_by_login(user_params['login']).activation_code}"
+<% if options[:email_only] -%>
+    user = User.find_by_email(user_params['email'])
+<% else -%>
+    user = User.find_by_login(user_params['login'])
+<% end -%>
+    get "/activate/#{user.activation_code}"
     response.should redirect_to('/login')
     follow_redirect!
   end
@@ -134,8 +154,11 @@ def log_in_user user_params=nil
   @user_params ||= user_params
   user_params  ||= @user_params
   post "/session", user_params
-  @user = User.find_by_login(user_params['login'])
-  controller.current_user
+<% if options[:email_only] -%>
+    @user = User.find_by_email(user_params['email'])
+<% else -%>
+    @user = User.find_by_login(user_params['login'])
+<% end -%>  controller.current_user
 end
 
 def log_in_user! *args

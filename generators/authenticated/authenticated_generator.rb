@@ -398,7 +398,9 @@ protected
     opt.on("--rspec",
       "Force rspec mode (checks for RAILS_ROOT/spec by default)") { |v| options[:rspec] = true }
     opt.on("--no-rspec",
-      "Force test (not RSpec mode")                               { |v| options[:rspec] = false }
+      "Force test (not RSpec mode)")                              { |v| options[:rspec] = false }
+    opt.on("--email-only",
+      "User logs in with email address, there is no 'login' ID")  { |v| options[:email_only] = true }
     opt.on("--skip-routes",
       "Don't generate a resource line in config/routes.rb")       { |v| options[:skip_routes] = v }
     opt.on("--old-passwords",

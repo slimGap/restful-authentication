@@ -17,6 +17,42 @@ module <%= model_controller_class_name %>Helper
     end
   end
 
+<% if options[:email_only] -%>
+  #
+  # Link to user's page ('<%= table_name %>/1')
+  #
+  # By default, their email is used as link text and link title (tooltip)
+  #
+  # Takes options
+  # * :content_text => 'Content text in place of <%= file_name %>.email', escaped with
+  #   the standard h() function.
+  # * :content_method => :<%= file_name %>_instance_method_to_call_for_content_text
+  # * :title_method => :<%= file_name %>_instance_method_to_call_for_title_attribute
+  # * as well as link_to()'s standard options
+  #
+  # Examples:
+  #   link_to_<%= file_name %> @<%= file_name %>
+  #   # => <a href="/<%= table_name %>/3" title="barmy@example.com">barmy@example.com</a>
+  #
+  #   # if you've added a .name attribute:
+  #  content_tag :span, :class => :vcard do
+  #    (link_to_<%= file_name %> <%= file_name %>, :class => 'fn n', :title_method => :email, :content_method => :name) +
+  #          ': ' + (content_tag :span, <%= file_name %>.email, :class => 'email')
+  #   end
+  #   # => <span class="vcard"><a href="/<%= table_name %>/3" title="barmy@example.com" class="fn n">Cyril Fotheringay-Phipps</a>: <span class="email">barmy@blandings.com</span></span>
+  #
+  #   link_to_<%= file_name %> @<%= file_name %>, :content_text => 'Your user page'
+  #   # => <a href="/<%= table_name %>/3" title="barmy" class="nickname">Your user page</a>
+  #
+  def link_to_<%= file_name %>(<%= file_name %>, options={})
+    raise "Invalid <%= file_name %>" unless <%= file_name %>
+    options.reverse_merge! :content_method => :email, :title_method => :email, :class => :nickname
+    content_text      = options.delete(:content_text)
+    content_text    ||= <%= file_name %>.send(options.delete(:content_method))
+    options[:title] ||= <%= file_name %>.send(options.delete(:title_method))
+    link_to h(content_text), <%= model_controller_routing_name.singularize %>_path(<%= file_name %>), options
+  end
+<% else -%>
   #
   # Link to user's page ('<%= table_name %>/1')
   #
@@ -51,6 +87,7 @@ module <%= model_controller_class_name %>Helper
     options[:title] ||= <%= file_name %>.send(options.delete(:title_method))
     link_to h(content_text), <%= model_controller_routing_name.singularize %>_path(<%= file_name %>), options
   end
+<% end -%>
 
   #
   # Link to login page using remote ip address as link content

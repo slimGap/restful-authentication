@@ -7,12 +7,14 @@ class <%= class_name %> < ActiveRecord::Base
 <% if options[:aasm] -%>
   include Authorization::AasmRoles
 <% elsif options[:stateful] -%>
-  include Authorization::StatefulRoles<% end %>
+  include Authorization::StatefulRoles
+<% end -%>
+<% unless options[:email_only] -%>
   validates_presence_of     :login
   validates_length_of       :login,    :within => 3..40
   validates_uniqueness_of   :login
   validates_format_of       :login,    :with => Authentication.login_regex, :message => Authentication.bad_login_message
-
+<% end -%>
   validates_format_of       :name,     :with => Authentication.name_regex,  :message => Authentication.bad_name_message, :allow_nil => true
   validates_length_of       :name,     :maximum => 100
 
@@ -26,7 +28,11 @@ class <%= class_name %> < ActiveRecord::Base
   # HACK HACK HACK -- how to do attr_accessible from here?
   # prevents a user from submitting a crafted form that bypasses activation
   # anything else you want your user to change should be added here.
+<%- if options[:email_only] -%>
+  attr_accessible :email, :name, :password, :password_confirmation
+<%- else -%>
   attr_accessible :login, :email, :name, :password, :password_confirmation
+<%- end -%>
 
 <% if options[:include_activation] && !options[:stateful] %>
   # Activates the user in the database.
@@ -47,6 +53,21 @@ class <%= class_name %> < ActiveRecord::Base
     activation_code.nil?
   end<% end %>
 
+<% if options[:email_only] -%>
+  # Authenticates a user by their email and unencrypted password.  Returns the user or nil.
+  #
+  # uff.  this is really an authorization, not authentication routine.
+  # We really need a Dispatch Chain here or something.
+  # This will also let us return a human error message.
+  #
+  def self.authenticate(email, password)
+    return nil if email.blank? || password.blank?
+    u = <% if    options[:stateful]           %>find_in_state :first, :active, :conditions => {:email => email.downcase}<%
+           elsif options[:include_activation] %>find :first, :conditions => ['email = ? and activated_at IS NOT NULL', email]<%
+           else %>find_by_email(email.downcase)<% end %> # need to get the salt
+    u && u.authenticated?(password) ? u : nil
+  end
+<% else -%>
   # Authenticates a user by their login name and unencrypted password.  Returns the user or nil.
   #
   # uff.  this is really an authorization, not authentication routine.  
@@ -64,6 +85,7 @@ class <%= class_name %> < ActiveRecord::Base
   def login=(value)
     write_attribute :login, (value ? value.downcase : nil)
   end
+<% end -%>
 
   def email=(value)
     write_attribute :email, (value ? value.downcase : nil)

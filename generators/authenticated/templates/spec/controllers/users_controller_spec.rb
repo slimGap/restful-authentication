@@ -14,20 +14,23 @@ describe <%= model_controller_class_name %>Controller do
     end.should change(<%= class_name %>, :count).by(1)
   end
 
-  <% if options[:stateful] %>
+<% if options[:stateful] -%>
   it 'signs up user in pending state' do
     create_<%= file_name %>
     assigns(:<%= file_name %>).reload
     assigns(:<%= file_name %>).should be_pending
-  end<% end %>
+  end
+<% end -%>
 
 <% if options[:include_activation] -%>
   it 'signs up user with activation code' do
     create_<%= file_name %>
     assigns(:<%= file_name %>).reload
     assigns(:<%= file_name %>).activation_code.should_not be_nil
-  end<% end -%>
+  end
+<% end -%>
 
+<% unless options[:email_only] -%>
   it 'requires login on signup' do
     lambda do
       create_<%= file_name %>(:login => nil)
@@ -35,7 +38,8 @@ describe <%= model_controller_class_name %>Controller do
       response.should be_success
     end.should_not change(<%= class_name %>, :count)
   end
-  
+<% end -%>
+
   it 'requires password on signup' do
     lambda do
       create_<%= file_name %>(:password => nil)
@@ -62,12 +66,21 @@ describe <%= model_controller_class_name %>Controller do
   
   <% if options[:include_activation] %>
   it 'activates user' do
+<% if options[:email_only] -%>
+    <%= class_name %>.authenticate('aaron@example.com', 'monkey').should be_nil
+    get :activate, :activation_code => <%= table_name %>(:aaron).activation_code
+    response.should redirect_to('/login')
+    flash[:notice].should_not be_nil
+    flash[:error ].should     be_nil
+    <%= class_name %>.authenticate('aaron@example.com', 'monkey').should == <%= table_name %>(:aaron)
+<% else -%>
     <%= class_name %>.authenticate('aaron', 'monkey').should be_nil
     get :activate, :activation_code => <%= table_name %>(:aaron).activation_code
     response.should redirect_to('/login')
     flash[:notice].should_not be_nil
     flash[:error ].should     be_nil
     <%= class_name %>.authenticate('aaron', 'monkey').should == <%= table_name %>(:aaron)
+<% end -%>
   end
   
   it 'does not activate user without key' do
@@ -89,8 +102,13 @@ describe <%= model_controller_class_name %>Controller do
   end<% end %>
   
   def create_<%= file_name %>(options = {})
+<% if options[:email_only] -%>
+    post :create, :<%= file_name %> => { :email => 'quire@example.com',
+      :password => 'quire69', :password_confirmation => 'quire69' }.merge(options)
+<% else -%>
     post :create, :<%= file_name %> => { :login => 'quire', :email => 'quire@example.com',
       :password => 'quire69', :password_confirmation => 'quire69' }.merge(options)
+<% end -%>
   end
 end
 
