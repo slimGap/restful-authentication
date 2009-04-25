@@ -3,12 +3,8 @@
 
 = error_messages_for :<%= file_name %>
 - form_for :<%= file_name %>, :url => <%= model_controller_routing_name %>_path do |f|
+<% unless options[:email_only] -%>
   %p
-<% if options[:email_only] -%>
-    = label_tag 'email'
-    %br/
-    = f.text_field :email
-<% else -%>
     = label_tag 'login'
     %br/
     = f.text_field :login
